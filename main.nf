@@ -24,11 +24,11 @@ def helpMessage() {
       --name                        Assign a name to this run. Nextflow will make one up if not supplied (this run is: "${workflow.runName}")
 
       --db_uri                      Centrifuge database URI pointing to .tar.gz containing Centrifuge DB files (*.{1,2,3}.cf). 
-                                    Can be "http://", "https://", "ftp://" or "file:///abspath/centrifuge.tgz". 
+                                    Can be "http://", "https://" or "ftp://". 
                                     Default: "${params.db_uri}"
 
       --hg_uri                      URI pointing to human genome reference fasta. Optionally gzipped. 
-                                    Can be "http://", "https://", "ftp://" or "file:///abspath/ref.fa{.gz}". 
+                                    Can be "http://", "https://" or "ftp://". 
                                     Default: "${params.hg_uri}"
     """.stripIndent()
 }
