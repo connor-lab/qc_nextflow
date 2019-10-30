@@ -51,7 +51,7 @@ if (params.fq) {
 } else {
     println("Please supply a path to some fastq files\n")
     helpMessage()
-    exit 0
+    exit 1
 }
 
 // OUTPUT DIRECTORY
@@ -60,7 +60,7 @@ if (params.outdir) {
 } else {
     println("Please supply an output directory\n")
     helpMessage()
-    exit 0
+    exit 1
 }
 
 
