@@ -24,3 +24,7 @@ You can run it like this:
 Help and defaults are available:
 
 `nextflow run connor-lab/qc_nextflow --help`
+
+### Pipeline DAG
+
+<img src="./assets/pipeline_dag.svg">
