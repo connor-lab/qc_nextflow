@@ -4,4 +4,5 @@ LABEL authors="Matt Bull, Amy Gaskin" \
 
 COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
+RUN apt-get install -y make
 ENV PATH /opt/conda/envs/connor-lab-nextflow_qc-0.1/bin:$PATH
