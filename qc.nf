@@ -11,16 +11,24 @@
 def helpMessage() {
     log.info"""
 
-    Usage:
+    \nUsage:
     nextflow run qc.nf --fq ['*_R{1,2}.fastq.gz'] --outdir [output_directory]
 
     Mandatory arguments:
       --fq                          Path to paired-end input reads, with fileglob (see: https://www.nextflow.io/docs/latest/channel.html#fromfilepairs)
+     
       --outdir                      The output directory where the results will be saved
       
     Other options:
-      --db_uri                      Centrifuge database URI pointing to .tar.gz containing Centrifuge DB files (*.{1,2,3}.cf). Can be "http://", "https://", "ftp://" or "file://". 
+      --name                        Assign a name to this run. Nextflow will make one up if not supplied (this run is: "${workflow.runName}")
+
+      --db_uri                      Centrifuge database URI pointing to .tar.gz containing Centrifuge DB files (*.{1,2,3}.cf). 
+                                    Can be "http://", "https://", "ftp://" or "file:///abspath/centrifuge.tgz". 
                                     Default: "${params.db_uri}"
+
+      --hg_uri                      URI pointing to human genome reference fasta. Optionally gzipped. 
+                                    Can be "http://", "https://", "ftp://" or "file:///abspath/ref.fa{.gz}". 
+                                    Default: "${params.hg_uri}"
     """.stripIndent()
 }
 
@@ -58,6 +66,8 @@ if (params.outdir) {
 // INPUT CENTRIFUGEDB URI
 centrifugeDbUri = params.db_uri
 
+// INPUT HUMAN GENOME URI
+humanGenomeFastaUri = params.hg_uri
 
 
 // INPUT CHANNELS
@@ -68,7 +78,53 @@ Channel.fromFilePairs( "${fastqGlob}" , flat: true)
 Channel.from( "${ centrifugeDbUri }" )
        .set{ ch_centrifugeDbUri }
 
+Channel.from( "${humanGenomeFastaUri}" )
+       .set{ ch_humanGenomeUri }
 
+
+
+process PREPAREDB_MINIMAP {
+
+    tag { custom_runName }
+    
+    cpus 4
+
+    input:
+    val db_uri from ch_humanGenomeUri
+
+    output:
+    file("reference.idx") into ch_prepareDb_humanDepletion
+
+    script:
+    if ( db_uri.endsWith(".gz") )
+        """
+        curl -fsSL "${db_uri}" | gzip -d > reference.fna
+        minimap2 -t ${task.cpus} -d reference.idx reference.fna
+        """
+    else 
+        """
+        curl -fsSL "${db_uri}"  > reference.fna
+        minimap2 -t ${task.cpus} -d reference.idx reference.fna
+        """
+}
+
+process DEPLETEHUMAN_MINIMAP {
+
+    tag { custom_runName }
+    
+    cpus 8
+
+    input:
+    set sample_id, file(forward), file(reverse), file(hg_reference) from ch_inputReads.combine(ch_prepareDb_humanDepletion)
+
+    output:
+    set sample_id, file("${sample_id}.R1.fq.gz"), file("${sample_id}.R2.fq.gz") into ch_depleteHuman_trimReads
+
+    script:
+    """
+    minimap2 -t ${task.cpus} -ax sr ${hg_reference} ${forward} ${reverse} | samtools view -b -f 13 - | samtools fastq -N -1 ${sample_id}.R1.fq.gz -2 ${sample_id}.R2.fq.gz -
+    """
+}
 
 process TRIMREADS_TRIMGALORE {
     tag { sample_id }
@@ -80,7 +136,7 @@ process TRIMREADS_TRIMGALORE {
     cpus 2
 
     input: 
-    set sample_id, file(forward), file(reverse) from ch_inputReads
+    set sample_id, file(forward), file(reverse) from ch_depleteHuman_trimReads
  
     output:
     set sample_id, file("*_val_1.fq.gz"), file("*_val_2.fq.gz") optional true into ch_trimReads_readLength, ch_trimReads_insertSize, ch_trimReads_sampleComposition
@@ -113,7 +169,11 @@ process INSERTSIZE_BBMERGE {
     """
 }
 
+
+
 process PREPAREDB_CENTRIFUGE {
+
+    tag { custom_runName }
     
     cpus 1
 
