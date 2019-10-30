@@ -16,10 +16,11 @@ def helpMessage() {
 
     Mandatory arguments:
       --fq                          Path to paired-end input reads, with fileglob (see: https://www.nextflow.io/docs/latest/channel.html#fromfilepairs)
-     
-      --outdir                      The output directory where the results will be saved
-      
+
     Other options:
+      --outdir                      The output directory where the results will be saved
+                                    Default: "${params.outdir}"
+      
       --name                        Assign a name to this run. Nextflow will make one up if not supplied (this run is: "${workflow.runName}")
 
       --db_uri                      Centrifuge database URI pointing to .tar.gz containing Centrifuge DB files (*.{1,2,3}.cf). 
