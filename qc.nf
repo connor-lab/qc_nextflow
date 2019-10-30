@@ -172,7 +172,7 @@ process QCSUMMARY_MULTIQC {
 }
 
 process SAMPLECOMPSUMMARY_KRONA {
-    tag { proctag }
+    tag { custom_runName }
 
     publishDir "${outputDir}/", mode: 'copy'
 
@@ -184,6 +184,6 @@ process SAMPLECOMPSUMMARY_KRONA {
 
     script:
     """
-    ktImportTaxonomy -o ${runName}_krona.html -m 5 -s 7 centrifuge_reports/*
+    ktImportTaxonomy -o ${custom_runName}_krona.html -m 5 -s 7 centrifuge_reports/*
     """
 }
