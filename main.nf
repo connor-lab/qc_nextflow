@@ -263,7 +263,7 @@ process SAMPLECOMPSUMMARY_KRONA {
     file(krona_taxonomy) from ch_prepareDb_sampleCompSummary
 
     output:
-    file "centrifuge_report.html"
+    file "${custom_runName}_krona.html"
 
     script:
     """
