@@ -142,7 +142,7 @@ process TRIMREADS_TRIMGALORE {
     set sample_id, file(forward), file(reverse) from ch_depleteHuman_trimReads
  
     output:
-    set sample_id, file("*_val_1.fq.gz"), file("*_val_2.fq.gz") optional true into ch_trimReads_readLength, ch_trimReads_insertSize, ch_trimReads_sampleComposition
+    set sample_id, file("*_val_1.fq.gz"), file("*_val_2.fq.gz") optional true into ch_trimReads_insertSize, ch_trimReads_sampleComposition
     set file("*trimming_report.txt"), file("*_fastqc.{zip,html}") optional true into ch_trimReads_qcSummary
 
     script:
