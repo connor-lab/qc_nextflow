@@ -81,6 +81,8 @@ Channel.from( "${ centrifugeDbUri }" )
 Channel.from( "${humanGenomeFastaUri}" )
        .set{ ch_humanGenomeUri }
 
+Channel.from( "taxonomy" )
+       .set{ ch_kronaDummy }
 
 
 process PREPAREDB_MINIMAP {
@@ -231,19 +233,39 @@ process QCSUMMARY_MULTIQC {
      """
 }
 
+process PREPAREDB_KRONA {
+
+    tag { custom_runName }
+
+    cpus 1
+
+    input:
+    val taxonomy_dir from ch_kronaDummy
+
+    output:
+    file("${taxonomy_dir}") into ch_prepareDb_sampleCompSummary
+
+    script:
+    """
+    ktUpdateTaxonomy.sh ${taxonomy_dir} 
+    """
+}
+
 process SAMPLECOMPSUMMARY_KRONA {
+
     tag { custom_runName }
 
     publishDir "${outputDir}/", mode: 'copy'
 
     input:
     file("centrifuge_reports/*") from ch_sampleComposition_compositionSummary.collect()
+    file(krona_taxonomy) from ch_prepareDb_sampleCompSummary
 
     output:
     file "centrifuge_report.html"
 
     script:
     """
-    ktImportTaxonomy -o ${custom_runName}_krona.html -m 5 -s 7 centrifuge_reports/*
+    ktImportTaxonomy -tax ${krona_taxonomy}  -o ${custom_runName}_krona.html -m 5 -s 7 centrifuge_reports/*
     """
 }
