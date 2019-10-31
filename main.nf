@@ -11,7 +11,7 @@
 def helpMessage() {
     log.info"""
 
-    \nUsage:
+    Usage:
     nextflow run qc.nf --fq ['*_R{1,2}.fastq.gz'] --outdir [output_directory]
 
     Mandatory arguments:
@@ -24,11 +24,14 @@ def helpMessage() {
       --name                        Assign a name to this run. Nextflow will make one up if not supplied (this run is: "${workflow.runName}")
 
       --db_uri                      Centrifuge database URI pointing to .tar.gz containing Centrifuge DB files (*.{1,2,3}.cf). 
-                                    Can be "http://", "https://" or "ftp://". 
+                                    Use "http://", "https://" or "ftp://" prefixes to download files.
+                                    Use "file:///absolute/path/to/database_archive.tar.gz" if you have the database archive locally.
                                     Default: "${params.db_uri}"
 
-      --hg_uri                      URI pointing to human genome reference fasta. Optionally gzipped. 
-                                    Can be "http://", "https://" or "ftp://". 
+      --hg_uri                      URI pointing to human genome reference fasta. 
+                                    Optionally gzipped. 
+                                    Use "http://", "https://" or "ftp://" prefixes to download files.
+                                    Use "file:///absolute/path/to/genome.fna{.gz} if you have the file locally"
                                     Default: "${params.hg_uri}"
     """.stripIndent()
 }
