@@ -81,7 +81,7 @@ if ( centrifugeDbUri.startsWith("file://") ) {
     remoteCentrifugeDb = false
     Channel.fromPath( "${centrifugeDbUri}".replace("file:\\/\\/", "") )
            .set{ ch_centrifugeDbUri }
-} else if ( centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("ftp://") ) {
+} else if ( centrifugeDbUri.startsWith("https://") || centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("ftp://") ) {
     remoteCentrifugeDb = true
     Channel.from( "${ centrifugeDbUri }" )
            .set{ ch_centrifugeDbUri }
@@ -96,7 +96,7 @@ if ( humanGenomeFastaUri.startsWith("file://") ) {
     remoteHumanGenomeFasta = false
     Channel.fromPath( "${humanGenomeFastaUri}".replace("file:\\/\\/", "") )
            .set{ ch_humanGenomeUri }
-} else if ( humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("ftp://") ) {
+} else if ( humanGenomeFastaUri.startsWith("https://") || humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("ftp://") ) {
     remoteHumanGenomeFasta = true
     Channel.from( "${ humanGenomeFastaUri }" )
            .set{ ch_humanGenomeUri }
