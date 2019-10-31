@@ -180,7 +180,14 @@ process DEPLETEHUMAN_MINIMAP {
 
     script:
     """
-    minimap2 -t ${task.cpus} -ax sr ${hg_reference} ${forward} ${reverse} | samtools view -b -f 13 - | samtools fastq -N -1 ${sample_id}.R1.fq.gz -2 ${sample_id}.R2.fq.gz -
+    minimap2 -t ${task.cpus} -ax sr ${hg_reference} ${forward} ${reverse} | \\ 
+    tee >(samtools view -b -f 4 -F 264 - | samtools sort -o unmapped1.sorted.bam ) \\
+    >(samtools view -b -f 8 -F 260 - | samtools sort -o unmapped2.sorted.bam ) \\
+    >(samtools view -b -f 12 -F 256 - | samtools sort -o unmapped3.sorted.bam ) \\
+    >/dev/null
+    
+    samtools merge unmapped.bam unmapped{1,2,3}.sorted.bam
+    samtools fastq -N -1 ${sample_id}.R1.fq.gz -2 ${sample_id}.R2.fq.gz unmapped.bam
     """
 }
 
