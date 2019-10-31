@@ -79,7 +79,7 @@ Channel.fromFilePairs( "${fastqGlob}" , flat: true)
 // Centrifuge DB (set local or remote).
 if ( centrifugeDbUri.startsWith("file://") ) {
     remoteCentrifugeDb = false
-    Channel.fromFile( "${centrifugeDbUri}".replace("file:\\/\\/", "") )
+    Channel.fromPath( "${centrifugeDbUri}".replace("file:\\/\\/", "") )
            .set{ ch_centrifugeDbUri }
 } else if ( centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("ftp://") ) {
     remoteCentrifugeDb = true
@@ -94,7 +94,7 @@ if ( centrifugeDbUri.startsWith("file://") ) {
 // Human genome fasta (set local or remote).
 if ( humanGenomeFastaUri.startsWith("file://") ) {
     remoteHumanGenomeFasta = false
-    Channel.fromFile( "${humanGenomeFastaUri}".replace("file:\\/\\/", "") )
+    Channel.fromPath( "${humanGenomeFastaUri}".replace("file:\\/\\/", "") )
            .set{ ch_humanGenomeUri }
 } else if ( humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("ftp://") ) {
     remoteHumanGenomeFasta = true
