@@ -19,7 +19,7 @@ It comes with its own docker container.
 ### Usage
 You can run it like this:
 
-`nextflow run connor-lab/qc_nextflow --fq '/path/to/input_reads/*_R{1,2}.fastq.gz'`
+`nextflow run connor-lab/qc_nextflow --fq '/path/to/input_reads/*_R{1,2}.fastq.gz' -profile {docker, singularity, conda}`
 
 Help and defaults are available:
 
