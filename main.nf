@@ -72,44 +72,96 @@ humanGenomeFastaUri = params.hg_uri
 
 
 // INPUT CHANNELS
+// Fastq files
 Channel.fromFilePairs( "${fastqGlob}" , flat: true)
        .set{ ch_inputReads }
 
+// Centrifuge DB (set local or remote).
+if ( centrifugeDbUri.startsWith("file://") ) {
+    remoteCentrifugeDb = false
+    Channel.fromFile( "${centrifugeDbUri}".replace("file:\\/\\/", "") )
+           .set{ ch_centrifugeDbUri }
+} else if ( centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("http://") || centrifugeDbUri.startsWith("ftp://") ) {
+    remoteCentrifugeDb = true
+    Channel.from( "${ centrifugeDbUri }" )
+           .set{ ch_centrifugeDbUri }
+} else {
+    println("Don't understand whether ${params.db_uri} is local or remote")
+    helpMessage()
+    exit 1
+}
 
-Channel.from( "${ centrifugeDbUri }" )
-       .set{ ch_centrifugeDbUri }
+// Human genome fasta (set local or remote).
+if ( humanGenomeFastaUri.startsWith("file://") ) {
+    remoteHumanGenomeFasta = false
+    Channel.fromFile( "${humanGenomeFastaUri}".replace("file:\\/\\/", "") )
+           .set{ ch_humanGenomeUri }
+} else if ( humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("http://") || humanGenomeFastaUri.startsWith("ftp://") ) {
+    remoteHumanGenomeFasta = true
+    Channel.from( "${ humanGenomeFastaUri }" )
+           .set{ ch_humanGenomeUri }
+} else {
+    println("Don't understand whether ${params.hg_uri} is local or remote")
+    helpMessage()
+    exit 1
+}
 
-Channel.from( "${humanGenomeFastaUri}" )
-       .set{ ch_humanGenomeUri }
-
+// Dummy value channel to start krona taxonomy process
 Channel.from( "taxonomy" )
        .set{ ch_kronaDummy }
 
 
-process PREPAREDB_MINIMAP {
+if (remoteHumanGenomeFasta) {
+    process PREPAREDBREMOTE_MINIMAP {
 
-    tag { custom_runName }
+        tag { custom_runName }
     
-    cpus 4
+        cpus 4
 
-    input:
-    val db_uri from ch_humanGenomeUri
+        input:
+        val db_uri from ch_humanGenomeUri
 
-    output:
-    file("reference.idx") into ch_prepareDb_humanDepletion
+        output:
+        file("reference.idx") into ch_prepareDb_humanDepletion
 
-    script:
-    if ( db_uri.endsWith(".gz") )
-        """
-        curl -fsSL "${db_uri}" | gzip -d > reference.fna
-        minimap2 -t ${task.cpus} -d reference.idx reference.fna
-        """
-    else 
-        """
-        curl -fsSL "${db_uri}"  > reference.fna
-        minimap2 -t ${task.cpus} -d reference.idx reference.fna
-        """
+        script:
+        if ( db_uri.endsWith(".gz") )
+            """
+            curl -fsSL "${db_uri}" | gzip -d > reference.fna
+            minimap2 -t ${task.cpus} -d reference.idx reference.fna
+            """
+        else 
+            """
+            curl -fsSL "${db_uri}"  > reference.fna
+            minimap2 -t ${task.cpus} -d reference.idx reference.fna
+            """
+    }
+} else {
+    process PREPAREDBLOCAL_MINIMAP {
+
+        tag { custom_runName }
+    
+        cpus 4
+
+        input:
+        file(db_uri) from ch_humanGenomeUri
+
+        output:
+        file("reference.idx") into ch_prepareDb_humanDepletion
+
+        script:
+        if ( db_uri.endsWith(".gz") )
+            """
+            zcat ${db_uri} > reference.fna
+            minimap2 -t ${task.cpus} -d reference.idx reference.fna
+            """
+        else 
+            """
+            minimap2 -t ${task.cpus} -d reference.idx ${db_uri}
+            """
+    }
 }
+
 
 process DEPLETEHUMAN_MINIMAP {
 
@@ -174,23 +226,44 @@ process INSERTSIZE_BBMERGE {
 
 
 
-process PREPAREDB_CENTRIFUGE {
+if (remoteCentrifugeDb) {
+    process PREPAREDBREMOTE_CENTRIFUGE {
 
-    tag { custom_runName }
+        tag { custom_runName }
     
-    cpus 1
+        cpus 1
 
-    input:
-    val db_archive_uri from ch_centrifugeDbUri
+        input:
+        val db_archive_uri from ch_centrifugeDbUri
 
-    output:
-    file("*.cf") into ch_prepareDb_sampleComposition
+        output:
+        file("*.cf") into ch_prepareDb_sampleComposition
 
-    script:
-    """
-    curl -fsSL "${db_archive_uri}" | tar -xz
-    find . -name "*.cf" -exec mv {} . \\;
-    """
+        script:
+        """
+        curl -fsSL "${db_archive_uri}" | tar -xz
+        find . -name "*.cf" -exec mv {} . \\;
+        """
+    }
+} else {
+    process PREPAREDLOCAL_CENTRIFUGE {
+
+        tag { custom_runName }
+    
+        cpus 1
+
+        input:
+        file(db_archive) from ch_centrifugeDbUri
+
+        output:
+        file("*.cf") into ch_prepareDb_sampleComposition
+
+        script:
+        """
+        tar -xzf ${db_archive}
+        find . -name "*.cf" -exec mv {} . \\;
+        """
+    }
 }
 
 process SAMPLECOMPOSITION_CENTRIFUGE {
